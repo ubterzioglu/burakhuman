@@ -697,6 +697,46 @@ img {
   min-height: 80px;
 }
 
+.missing-section {
+  margin-top: 18px;
+  overflow-x: auto;
+}
+
+.missing-table {
+  min-width: 1120px;
+}
+
+.missing-table p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-missing,
+.status-phase_two {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-partial {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.status-modernized {
+  background: #e0f2fe;
+  color: #075985;
+}
+
 @media (max-width: 900px) {
   .header-inner {
     height: auto;

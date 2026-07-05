@@ -8,6 +8,7 @@ const nav = [
   { href: "/admin/pages", label: "Icerikler" },
   { href: "/admin/categories", label: "Kategoriler" },
   { href: "/admin/revisions", label: "Revizyonlar" },
+  { href: "/admin/missing", label: "Eksik Kalanlar" },
   { href: "/admin/messages", label: "Mesajlar" },
   { href: "/admin/settings", label: "Ayarlar" },
 ];

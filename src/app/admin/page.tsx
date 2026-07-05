@@ -1,9 +1,11 @@
 import { AdminShell } from "@/components/AdminShell";
 import { getAdminDashboardData, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "@/lib/data";
+import { missingItems } from "@/lib/missing-items";
 
 export default async function AdminPage() {
   const { pages, categories, messages, revisions } = await getAdminDashboardData();
   const openRevisions = revisions.filter((revision) => !["done", "rejected"].includes(revision.status));
+  const highPriorityMissing = missingItems.filter((item) => item.priority === "high");
 
   return (
     <AdminShell>
@@ -31,6 +33,14 @@ export default async function AdminPage() {
         <div className="metric">
           <span>Toplam Revizyon</span>
           <strong>{revisions.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Eksik Kalan</span>
+          <strong>{missingItems.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Yuksek Oncelik Eksik</span>
+          <strong>{highPriorityMissing.length}</strong>
         </div>
       </div>
       <div className="admin-card">
