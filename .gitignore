@@ -1,0 +1,57 @@
+# Legacy source archive
+httpdocs/
+
+# Dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+*.jks
+*.keystore
+secrets/
+private/
+
+# Logs and local runtime files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dev-server*.log
+
+# Database exports, backups, and private migrations
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.tar.gz
+backups/
+exports/
+
+# Purchased/private book binaries should be distributed outside Git
+public/Dosyalar/books/*.pdf
+public/Dosyalar/books/*.epub
+public/Dosyalar/books/*.mobi
+public/Dosyalar/books/*.zip
+public/Dosyalar/books/*.rar
+*.psd
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
