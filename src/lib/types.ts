@@ -76,4 +76,12 @@ export type RevisionRequest = {
   admin_notes: string | null;
   created_at: string | null;
   updated_at: string | null;
+  comments?: RevisionComment[];
+};
+
+export type RevisionComment = {
+  id: number;
+  revision_id: number;
+  body: string;
+  created_at: string | null;
 };

@@ -1,10 +1,12 @@
 import { legacyCategories, legacyContentTypes, legacyFiles, legacyPages, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "./legacy";
+import { isPostgresConfigured, query as dbQuery } from "./db";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "./supabase";
-import type { Category, ContentType, FileRecord, MessageRecord, PageRecord, RevisionRequest } from "./types";
+import type { Category, ContentType, FileRecord, MessageRecord, PageRecord, RevisionComment, RevisionRequest } from "./types";
 
 const pageSelect =
   "id, sub_page_id, category_id, type_id, lang, title, summary, body, picture_url, rank, chck1, chck2, val1, val2, val3, val4, val5, val6, val7, published, created_at, updated_at";
 const revisionSelect = "id, title, page_url, description, priority, status, admin_notes, created_at, updated_at";
+const revisionCommentSelect = "id, revision_id, body, created_at";
 
 function service() {
   return isSupabaseConfigured() ? createSupabaseServiceClient() : null;
@@ -12,14 +14,36 @@ function service() {
 
 export async function getContentTypes(): Promise<ContentType[]> {
   const supabase = service();
-  if (!supabase) return legacyContentTypes;
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const { rows } = await dbQuery<ContentType>("select * from content_types order by id");
+        return rows;
+      } catch {
+        return legacyContentTypes;
+      }
+    }
+    return legacyContentTypes;
+  }
   const { data, error } = await supabase.from("content_types").select("*").order("id");
   return error || !data ? legacyContentTypes : data;
 }
 
 export async function getCategories(typeId?: number): Promise<Category[]> {
   const supabase = service();
-  if (!supabase) return legacyCategories.filter((category) => !typeId || category.type_id === typeId);
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const values = typeId ? [typeId] : [];
+        const where = typeId ? "where type_id = $1" : "";
+        const { rows } = await dbQuery<Category>(`select id, type_id, name, rank from categories ${where} order by rank, name`, values);
+        return rows;
+      } catch {
+        return legacyCategories.filter((category) => !typeId || category.type_id === typeId);
+      }
+    }
+    return legacyCategories.filter((category) => !typeId || category.type_id === typeId);
+  }
   let query = supabase.from("categories").select("*").order("rank").order("name");
   if (typeId) query = query.eq("type_id", typeId);
   const { data, error } = await query;
@@ -35,6 +59,28 @@ export async function getPages(options: {
   const { typeId, lang = "en", limit, publishedOnly = true } = options;
   const supabase = service();
   if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const values: unknown[] = [lang];
+        const filters = ["lang = $1"];
+        if (typeId) {
+          values.push(typeId);
+          filters.push(`type_id = $${values.length}`);
+        }
+        if (publishedOnly) filters.push("published = true");
+        const limitClause = limit ? `limit ${Number(limit)}` : "";
+        const { rows } = await dbQuery<PageRecord>(
+          `select ${pageSelect} from pages where ${filters.join(" and ")} order by rank ${limitClause}`,
+          values,
+        );
+        return rows;
+      } catch {
+        return legacyPages
+          .filter((page) => (!typeId || page.type_id === typeId) && page.lang === lang && (!publishedOnly || page.published))
+          .sort((a, b) => a.rank - b.rank)
+          .slice(0, limit ?? legacyPages.length);
+      }
+    }
     return legacyPages
       .filter((page) => (!typeId || page.type_id === typeId) && page.lang === lang && (!publishedOnly || page.published))
       .sort((a, b) => a.rank - b.rank)
@@ -51,7 +97,18 @@ export async function getPages(options: {
 
 export async function getPageById(id: number, publishedOnly = true): Promise<PageRecord | null> {
   const supabase = service();
-  if (!supabase) return legacyPages.find((page) => page.id === id && (!publishedOnly || page.published)) ?? null;
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const publishedFilter = publishedOnly ? "and published = true" : "";
+        const { rows } = await dbQuery<PageRecord>(`select ${pageSelect} from pages where id = $1 ${publishedFilter} limit 1`, [id]);
+        return rows[0] ?? null;
+      } catch {
+        return legacyPages.find((page) => page.id === id && (!publishedOnly || page.published)) ?? null;
+      }
+    }
+    return legacyPages.find((page) => page.id === id && (!publishedOnly || page.published)) ?? null;
+  }
   let query = supabase.from("pages").select(pageSelect).eq("id", id);
   if (publishedOnly) query = query.eq("published", true);
   const { data, error } = await query.single();
@@ -80,7 +137,20 @@ export async function getContactPage() {
 
 export async function getPageImages(pageId: number): Promise<FileRecord[]> {
   const supabase = service();
-  if (!supabase) return legacyFiles.filter((file) => file.album_id === pageId && file.kind === "image").sort((a, b) => a.rank - b.rank);
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const { rows } = await dbQuery<FileRecord>(
+          "select id, album_id, kind, extension, title, file_url, rank, created_at from files where album_id = $1 and kind = 'image' order by rank",
+          [pageId],
+        );
+        return rows;
+      } catch {
+        return legacyFiles.filter((file) => file.album_id === pageId && file.kind === "image").sort((a, b) => a.rank - b.rank);
+      }
+    }
+    return legacyFiles.filter((file) => file.album_id === pageId && file.kind === "image").sort((a, b) => a.rank - b.rank);
+  }
   const { data, error } = await supabase
     .from("files")
     .select("id, album_id, kind, extension, title, file_url, rank, created_at")
@@ -103,19 +173,76 @@ export async function getAdminDashboardData() {
 
 export async function getMessages(): Promise<MessageRecord[]> {
   const supabase = service();
-  if (!supabase) return [];
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const { rows } = await dbQuery<MessageRecord>(
+          "select id, name, telephone, email, subject, message, status, created_at from messages order by created_at desc",
+        );
+        return rows;
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
   const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: false });
   return error || !data ? [] : data;
 }
 
 export async function getRevisionRequests(): Promise<RevisionRequest[]> {
   const supabase = service();
-  if (!supabase) return [];
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const { rows } = await dbQuery<RevisionRequest>(`select ${revisionSelect} from revision_requests order by created_at desc`);
+        if (!rows.length) return rows;
+
+        const { rows: comments } = await dbQuery<RevisionComment>(
+          `select ${revisionCommentSelect} from revision_comments where revision_id = any($1::bigint[]) order by created_at asc`,
+          [rows.map((revision) => revision.id)],
+        );
+        const commentsByRevision = new Map<number, RevisionComment[]>();
+        comments.forEach((comment) => {
+          commentsByRevision.set(comment.revision_id, [...(commentsByRevision.get(comment.revision_id) ?? []), comment]);
+        });
+
+        return rows.map((revision) => ({
+          ...revision,
+          comments: commentsByRevision.get(revision.id) ?? [],
+        }));
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
   const { data, error } = await supabase
     .from("revision_requests")
     .select(revisionSelect)
     .order("created_at", { ascending: false });
-  return error || !data ? [] : data;
+  if (error || !data?.length) return [];
+
+  const { data: comments, error: commentsError } = await supabase
+    .from("revision_comments")
+    .select(revisionCommentSelect)
+    .in(
+      "revision_id",
+      data.map((revision) => revision.id),
+    )
+    .order("created_at", { ascending: true });
+
+  if (commentsError || !comments) return data;
+
+  const commentsByRevision = new Map<number, RevisionComment[]>();
+  comments.forEach((comment) => {
+    commentsByRevision.set(comment.revision_id, [...(commentsByRevision.get(comment.revision_id) ?? []), comment]);
+  });
+
+  return data.map((revision) => ({
+    ...revision,
+    comments: commentsByRevision.get(revision.id) ?? [],
+  }));
 }
 
 export { TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER };

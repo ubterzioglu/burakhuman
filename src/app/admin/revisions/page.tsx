@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/AdminShell";
-import { createRevisionRequest, updateRevisionRequest } from "@/lib/admin-actions";
+import { createRevisionComment, createRevisionRequest, updateRevisionRequest } from "@/lib/admin-actions";
 import { getRevisionRequests } from "@/lib/data";
 
 const priorities = [
@@ -83,6 +83,23 @@ export default async function AdminRevisionsPage() {
                     </>
                   ) : null}
                   <p>{revision.description}</p>
+                  {revision.comments?.length ? (
+                    <div className="revision-comments">
+                      {revision.comments.map((comment) => (
+                        <div key={comment.id} className="revision-comment">
+                          <span>{comment.created_at ? new Date(comment.created_at).toLocaleString("tr-TR") : "-"}</span>
+                          <p>{comment.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <form className="revision-comment-form" action={createRevisionComment}>
+                    <input type="hidden" name="revision_id" value={revision.id} />
+                    <textarea className="textarea" name="body" placeholder="Yorum ekle" required />
+                    <button className="button" type="submit">
+                      Yorum Ekle
+                    </button>
+                  </form>
                 </td>
                 <td>
                   <form className="revision-row-form" action={updateRevisionRequest} id={`revision-${revision.id}`}>

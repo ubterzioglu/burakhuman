@@ -16,7 +16,7 @@ The public site works with fallback content if Supabase env vars are not configu
 1. Create a Supabase project.
 2. Run `database/schema.sql` in the Supabase SQL Editor.
 3. Create a public Storage bucket named `legacy-assets`.
-4. Copy `.env.example` to `.env.local` and fill Supabase, admin password/session secret, and optional SMTP values.
+4. Copy `.env.example` to `.env.local` and fill Supabase or direct Postgres, admin password/session secret, and optional SMTP values.
 
 Admin login is a single-password flow:
 
@@ -24,6 +24,14 @@ Admin login is a single-password flow:
 ADMIN_PASSWORD=change-me
 ADMIN_SESSION_SECRET=generate-a-long-random-string
 ```
+
+Database access works with Supabase API env vars, or a direct Postgres connection string:
+
+```bash
+DATABASE_URL=postgresql://...
+```
+
+For local development only, a raw Postgres URL pasted into `.env.local` is also detected, but Coolify/production should use `DATABASE_URL`.
 
 ## Routes
 

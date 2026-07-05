@@ -15,6 +15,9 @@ This app is ready for Coolify using the included `Dockerfile`.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+POSTGRES_URL=
+SUPABASE_DB_URL=
 ADMIN_PASSWORD=
 ADMIN_SESSION_SECRET=
 MAIL_FROM=
@@ -25,7 +28,8 @@ SMTP_USER=
 SMTP_PASS=
 ```
 
-SMTP variables are optional for first deploy. Without them, the contact form stores messages in Supabase but skips email sending.
+Use either Supabase API variables or one direct Postgres variable such as `DATABASE_URL`.
+SMTP variables are optional for first deploy. Without them, the contact form stores messages in the database but skips email sending.
 `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` are required for `/admin`.
 
 ## Supabase setup

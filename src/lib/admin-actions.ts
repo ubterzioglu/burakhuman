@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isPostgresConfigured, query } from "./db";
 import {
   createSupabaseServiceClient,
   isAdminAuthConfigured,
@@ -14,9 +15,9 @@ import {
 async function assertAdmin() {
   const admin = await requireAdmin();
   if (!admin) throw new Error("Unauthorized");
-  const service = createSupabaseServiceClient();
-  if (!service) throw new Error("Supabase service role is not configured");
-  return service;
+  if (!createSupabaseServiceClient() && !isPostgresConfigured()) {
+    throw new Error("Database connection is not configured");
+  }
 }
 
 function nullableString(value: FormDataEntryValue | null) {
@@ -41,7 +42,8 @@ const pageSchema = z.object({
 });
 
 export async function savePage(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const parsed = pageSchema.parse({
     id: nullableString(formData.get("id")) || undefined,
     type_id: formData.get("type_id"),
@@ -74,11 +76,58 @@ export async function savePage(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
-  const result = parsed.id
-    ? await supabase.from("pages").update(payload).eq("id", parsed.id)
-    : await supabase.from("pages").insert(payload);
+  if (supabase) {
+    const result = parsed.id
+      ? await supabase.from("pages").update(payload).eq("id", parsed.id)
+      : await supabase.from("pages").insert(payload);
 
-  if (result.error) throw new Error(result.error.message);
+    if (result.error) throw new Error(result.error.message);
+  } else {
+    if (parsed.id) {
+      await query(
+        `update pages
+         set type_id = $1, category_id = $2, lang = $3, title = $4, summary = $5, body = $6, picture_url = $7,
+             rank = $8, val1 = $9, val2 = $10, val3 = $11, published = $12, updated_at = $13
+         where id = $14`,
+        [
+          payload.type_id,
+          payload.category_id,
+          payload.lang,
+          payload.title,
+          payload.summary,
+          payload.body,
+          payload.picture_url,
+          payload.rank,
+          payload.val1,
+          payload.val2,
+          payload.val3,
+          payload.published,
+          payload.updated_at,
+          parsed.id,
+        ],
+      );
+    } else {
+      await query(
+        `insert into pages (type_id, category_id, lang, title, summary, body, picture_url, rank, val1, val2, val3, published, updated_at)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [
+          payload.type_id,
+          payload.category_id,
+          payload.lang,
+          payload.title,
+          payload.summary,
+          payload.body,
+          payload.picture_url,
+          payload.rank,
+          payload.val1,
+          payload.val2,
+          payload.val3,
+          payload.published,
+          payload.updated_at,
+        ],
+      );
+    }
+  }
   revalidatePath("/");
   revalidatePath("/blogs");
   revalidatePath("/admin/pages");
@@ -86,11 +135,16 @@ export async function savePage(formData: FormData) {
 }
 
 export async function deletePage(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const id = Number(formData.get("id"));
   if (!id) throw new Error("Invalid page id");
-  const { error } = await supabase.from("pages").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (supabase) {
+    const { error } = await supabase.from("pages").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("delete from pages where id = $1", [id]);
+  }
   revalidatePath("/admin/pages");
   redirect("/admin/pages");
 }
@@ -103,7 +157,8 @@ const categorySchema = z.object({
 });
 
 export async function saveCategory(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const parsed = categorySchema.parse({
     id: nullableString(formData.get("id")) || undefined,
     type_id: formData.get("type_id"),
@@ -111,38 +166,66 @@ export async function saveCategory(formData: FormData) {
     rank: formData.get("rank") || 0,
   });
 
-  const result = parsed.id
-    ? await supabase.from("categories").update({ type_id: parsed.type_id, name: parsed.name, rank: parsed.rank }).eq("id", parsed.id)
-    : await supabase.from("categories").insert({ type_id: parsed.type_id, name: parsed.name, rank: parsed.rank });
+  if (supabase) {
+    const result = parsed.id
+      ? await supabase.from("categories").update({ type_id: parsed.type_id, name: parsed.name, rank: parsed.rank }).eq("id", parsed.id)
+      : await supabase.from("categories").insert({ type_id: parsed.type_id, name: parsed.name, rank: parsed.rank });
 
-  if (result.error) throw new Error(result.error.message);
+    if (result.error) throw new Error(result.error.message);
+  } else if (parsed.id) {
+    await query("update categories set type_id = $1, name = $2, rank = $3 where id = $4", [
+      parsed.type_id,
+      parsed.name,
+      parsed.rank,
+      parsed.id,
+    ]);
+  } else {
+    await query("insert into categories (type_id, name, rank) values ($1, $2, $3)", [parsed.type_id, parsed.name, parsed.rank]);
+  }
   revalidatePath("/blogs");
   revalidatePath("/admin/categories");
   redirect("/admin/categories");
 }
 
 export async function markMessageRead(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const id = Number(formData.get("id"));
-  const { error } = await supabase.from("messages").update({ status: "read" }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (supabase) {
+    const { error } = await supabase.from("messages").update({ status: "read" }).eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("update messages set status = 'read' where id = $1", [id]);
+  }
   revalidatePath("/admin/messages");
 }
 
 export async function saveOption(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const name = String(formData.get("name") || "").trim();
   const value = String(formData.get("value") || "").trim();
   if (!name) throw new Error("Option name is required");
 
-  const { error } = await supabase.from("site_options").upsert({ name, value }, { onConflict: "name" });
-  if (error) throw new Error(error.message);
+  if (supabase) {
+    const { error } = await supabase.from("site_options").upsert({ name, value }, { onConflict: "name" });
+    if (error) throw new Error(error.message);
+  } else {
+    await query(
+      `insert into site_options (name, value, updated_at)
+       values ($1, $2, now())
+       on conflict (name) do update set value = excluded.value, updated_at = now()`,
+      [name, value],
+    );
+  }
   revalidatePath("/admin/settings");
   redirect("/admin/settings");
 }
 
 export async function uploadPageImage(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  if (!supabase) throw new Error("Supabase service role is required for Storage uploads");
   const pageId = Number(formData.get("page_id"));
   const file = formData.get("file");
   if (!pageId || !(file instanceof File) || !file.size) throw new Error("File and page id are required");
@@ -187,7 +270,8 @@ const revisionSchema = z.object({
 });
 
 export async function createRevisionRequest(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const parsed = revisionSchema.parse({
     title: formData.get("title"),
     page_url: nullableString(formData.get("page_url")),
@@ -196,16 +280,24 @@ export async function createRevisionRequest(formData: FormData) {
     admin_notes: nullableString(formData.get("admin_notes")),
   });
 
-  const { error } = await supabase.from("revision_requests").insert({
-    title: parsed.title,
-    page_url: parsed.page_url,
-    description: parsed.description,
-    priority: parsed.priority,
-    status: "new",
-    admin_notes: parsed.admin_notes,
-  });
+  if (supabase) {
+    const { error } = await supabase.from("revision_requests").insert({
+      title: parsed.title,
+      page_url: parsed.page_url,
+      description: parsed.description,
+      priority: parsed.priority,
+      status: "new",
+      admin_notes: parsed.admin_notes,
+    });
 
-  if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message);
+  } else {
+    await query(
+      `insert into revision_requests (title, page_url, description, priority, status, admin_notes)
+       values ($1, $2, $3, $4, 'new', $5)`,
+      [parsed.title, parsed.page_url, parsed.description, parsed.priority, parsed.admin_notes],
+    );
+  }
   revalidatePath("/admin");
   revalidatePath("/admin/revisions");
   redirect("/admin/revisions");
@@ -219,7 +311,8 @@ const revisionUpdateSchema = z.object({
 });
 
 export async function updateRevisionRequest(formData: FormData) {
-  const supabase = await assertAdmin();
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
   const parsed = revisionUpdateSchema.parse({
     id: formData.get("id"),
     priority: formData.get("priority"),
@@ -227,17 +320,51 @@ export async function updateRevisionRequest(formData: FormData) {
     admin_notes: nullableString(formData.get("admin_notes")),
   });
 
-  const { error } = await supabase
-    .from("revision_requests")
-    .update({
-      priority: parsed.priority,
-      status: parsed.status,
-      admin_notes: parsed.admin_notes,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", parsed.id);
+  if (supabase) {
+    const { error } = await supabase
+      .from("revision_requests")
+      .update({
+        priority: parsed.priority,
+        status: parsed.status,
+        admin_notes: parsed.admin_notes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", parsed.id);
 
-  if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message);
+  } else {
+    await query(
+      "update revision_requests set priority = $1, status = $2, admin_notes = $3, updated_at = now() where id = $4",
+      [parsed.priority, parsed.status, parsed.admin_notes, parsed.id],
+    );
+  }
   revalidatePath("/admin");
+  revalidatePath("/admin/revisions");
+}
+
+const revisionCommentSchema = z.object({
+  revision_id: z.coerce.number().min(1),
+  body: z.string().trim().min(1).max(5000),
+});
+
+export async function createRevisionComment(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const parsed = revisionCommentSchema.parse({
+    revision_id: formData.get("revision_id"),
+    body: formData.get("body"),
+  });
+
+  if (supabase) {
+    const { error } = await supabase.from("revision_comments").insert({
+      revision_id: parsed.revision_id,
+      body: parsed.body,
+    });
+
+    if (error) throw new Error(error.message);
+  } else {
+    await query("insert into revision_comments (revision_id, body) values ($1, $2)", [parsed.revision_id, parsed.body]);
+  }
+
   revalidatePath("/admin/revisions");
 }

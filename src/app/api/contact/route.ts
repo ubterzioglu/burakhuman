@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isPostgresConfigured, query } from "@/lib/db";
 import { sendContactMail } from "@/lib/mail";
 import { createSupabaseServiceClient } from "@/lib/supabase";
 
@@ -30,6 +31,16 @@ export async function POST(request: Request) {
     });
 
     if (error) return NextResponse.json({ error: "Message could not be saved." }, { status: 500 });
+  } else if (isPostgresConfigured()) {
+    try {
+      await query(
+        `insert into messages (name, telephone, email, subject, message, status)
+         values ($1, $2, $3, 'ILETISIM / TALEP FORMU', $4, 'new')`,
+        [input.name, input.telephone || null, input.email, input.message],
+      );
+    } catch {
+      return NextResponse.json({ error: "Message could not be saved." }, { status: 500 });
+    }
   }
 
   await sendContactMail(input).catch(() => null);

@@ -665,6 +665,38 @@ img {
   min-height: 92px;
 }
 
+.revision-comments {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.revision-comment {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.revision-comment span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.revision-comment p {
+  margin: 4px 0 0;
+}
+
+.revision-comment-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.revision-comment-form .textarea {
+  min-height: 80px;
+}
+
 @media (max-width: 900px) {
   .header-inner {
     height: auto;

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { isPostgresConfigured } from "./db";
 
 export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -23,7 +24,7 @@ export function isSupabaseConfigured() {
 }
 
 export function isSupabaseServiceConfigured() {
-  return Boolean(supabaseUrl && supabaseServiceRoleKey);
+  return Boolean((supabaseUrl && supabaseServiceRoleKey) || isPostgresConfigured());
 }
 
 export function isAdminAuthConfigured() {
