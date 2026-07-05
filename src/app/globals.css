@@ -579,6 +579,13 @@ img {
   box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
 }
 
+.admin-warning {
+  margin-bottom: 18px;
+  border-color: #f4c430;
+  background: #fff8d6;
+  color: #7a4b00;
+}
+
 .admin-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -646,6 +653,16 @@ img {
   border-radius: 6px;
   padding: 28px;
   border: 1px solid var(--line);
+}
+
+.revision-row-form {
+  display: grid;
+  gap: 8px;
+}
+
+.revision-note {
+  min-width: 220px;
+  min-height: 92px;
 }
 
 @media (max-width: 900px) {

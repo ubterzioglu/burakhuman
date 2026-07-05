@@ -65,3 +65,15 @@ export type MessageRecord = {
   status: "new" | "read" | "archived";
   created_at: string | null;
 };
+
+export type RevisionRequest = {
+  id: number;
+  title: string;
+  page_url: string | null;
+  description: string;
+  priority: "low" | "normal" | "high";
+  status: "new" | "in_progress" | "done" | "rejected";
+  admin_notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};

@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createSupabaseServerClient, createSupabaseServiceClient, requireAdmin } from "./supabase";
+import {
+  createSupabaseServiceClient,
+  isAdminAuthConfigured,
+  requireAdmin,
+  setAdminSessionCookie,
+  verifyAdminPassword,
+} from "./supabase";
 
 async function assertAdmin() {
   const admin = await requireAdmin();
@@ -163,11 +169,75 @@ export async function uploadPageImage(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase is not configured");
-  const email = String(formData.get("email") || "");
+  if (!isAdminAuthConfigured()) redirect("/admin/login?error=config");
   const password = String(formData.get("password") || "");
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/admin/login?error=1");
+
+  if (!verifyAdminPassword(password)) redirect("/admin/login?error=1");
+
+  await setAdminSessionCookie();
   redirect("/admin");
+}
+
+const revisionSchema = z.object({
+  title: z.string().trim().min(1).max(240),
+  page_url: z.string().trim().max(500).nullable().optional(),
+  description: z.string().trim().min(1).max(5000),
+  priority: z.enum(["low", "normal", "high"]).default("normal"),
+  admin_notes: z.string().trim().max(5000).nullable().optional(),
+});
+
+export async function createRevisionRequest(formData: FormData) {
+  const supabase = await assertAdmin();
+  const parsed = revisionSchema.parse({
+    title: formData.get("title"),
+    page_url: nullableString(formData.get("page_url")),
+    description: formData.get("description"),
+    priority: formData.get("priority") || "normal",
+    admin_notes: nullableString(formData.get("admin_notes")),
+  });
+
+  const { error } = await supabase.from("revision_requests").insert({
+    title: parsed.title,
+    page_url: parsed.page_url,
+    description: parsed.description,
+    priority: parsed.priority,
+    status: "new",
+    admin_notes: parsed.admin_notes,
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/revisions");
+  redirect("/admin/revisions");
+}
+
+const revisionUpdateSchema = z.object({
+  id: z.coerce.number().min(1),
+  priority: z.enum(["low", "normal", "high"]),
+  status: z.enum(["new", "in_progress", "done", "rejected"]),
+  admin_notes: z.string().trim().max(5000).nullable().optional(),
+});
+
+export async function updateRevisionRequest(formData: FormData) {
+  const supabase = await assertAdmin();
+  const parsed = revisionUpdateSchema.parse({
+    id: formData.get("id"),
+    priority: formData.get("priority"),
+    status: formData.get("status"),
+    admin_notes: nullableString(formData.get("admin_notes")),
+  });
+
+  const { error } = await supabase
+    .from("revision_requests")
+    .update({
+      priority: parsed.priority,
+      status: parsed.status,
+      admin_notes: parsed.admin_notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", parsed.id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/revisions");
 }

@@ -2,7 +2,8 @@ import { AdminShell } from "@/components/AdminShell";
 import { getAdminDashboardData, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "@/lib/data";
 
 export default async function AdminPage() {
-  const { pages, categories, messages } = await getAdminDashboardData();
+  const { pages, categories, messages, revisions } = await getAdminDashboardData();
+  const openRevisions = revisions.filter((revision) => !["done", "rejected"].includes(revision.status));
 
   return (
     <AdminShell>
@@ -22,6 +23,14 @@ export default async function AdminPage() {
         <div className="metric">
           <span>Yeni Mesaj</span>
           <strong>{messages.filter((message) => message.status === "new").length}</strong>
+        </div>
+        <div className="metric">
+          <span>Acik Revizyon</span>
+          <strong>{openRevisions.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Toplam Revizyon</span>
+          <strong>{revisions.length}</strong>
         </div>
       </div>
       <div className="admin-card">

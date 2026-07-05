@@ -15,6 +15,8 @@ This app is ready for Coolify using the included `Dockerfile`.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+ADMIN_PASSWORD=
+ADMIN_SESSION_SECRET=
 MAIL_FROM=
 MAIL_TO=
 SMTP_HOST=
@@ -24,25 +26,19 @@ SMTP_PASS=
 ```
 
 SMTP variables are optional for first deploy. Without them, the contact form stores messages in Supabase but skips email sending.
+`ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` are required for `/admin`.
 
-## Supabase admin setup
+## Supabase setup
 
 1. Run `database/schema.sql` in Supabase SQL Editor.
 2. Create a public Storage bucket named `legacy-assets`.
-3. Create an Auth user for the site admin.
-4. Add that user to `admin_profiles`:
-
-```sql
-insert into public.admin_profiles (user_id, display_name, role)
-values ('AUTH_USER_UUID', 'Admin', 'admin');
-```
-
-5. In Supabase Auth URL settings, add your Coolify domain as the site URL.
+3. Fill the Supabase and admin env variables in Coolify.
 
 ## Admin panel
 
 - URL: `/admin`
 - Login: `/admin/login`
-- Sections: dashboard, content pages, categories, messages, settings
+- Auth: single password from `ADMIN_PASSWORD`
+- Sections: dashboard, content pages, categories, revision requests, messages, settings
 
-Public pages keep working with fallback content when Supabase is not configured, but `/admin` requires Supabase.
+Public pages keep working with fallback content when Supabase is not configured. `/admin` requires admin env vars, and database-backed admin actions require Supabase service role env vars.

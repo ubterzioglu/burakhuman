@@ -1,9 +1,10 @@
 import { legacyCategories, legacyContentTypes, legacyFiles, legacyPages, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "./legacy";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "./supabase";
-import type { Category, ContentType, FileRecord, MessageRecord, PageRecord } from "./types";
+import type { Category, ContentType, FileRecord, MessageRecord, PageRecord, RevisionRequest } from "./types";
 
 const pageSelect =
   "id, sub_page_id, category_id, type_id, lang, title, summary, body, picture_url, rank, chck1, chck2, val1, val2, val3, val4, val5, val6, val7, published, created_at, updated_at";
+const revisionSelect = "id, title, page_url, description, priority, status, admin_notes, created_at, updated_at";
 
 function service() {
   return isSupabaseConfigured() ? createSupabaseServiceClient() : null;
@@ -90,19 +91,30 @@ export async function getPageImages(pageId: number): Promise<FileRecord[]> {
 }
 
 export async function getAdminDashboardData() {
-  const [types, categories, pages, messages] = await Promise.all([
+  const [types, categories, pages, messages, revisions] = await Promise.all([
     getContentTypes(),
     getCategories(),
     getPages({ publishedOnly: false, lang: "en" }),
     getMessages(),
+    getRevisionRequests(),
   ]);
-  return { types, categories, pages, messages };
+  return { types, categories, pages, messages, revisions };
 }
 
 export async function getMessages(): Promise<MessageRecord[]> {
   const supabase = service();
   if (!supabase) return [];
   const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: false });
+  return error || !data ? [] : data;
+}
+
+export async function getRevisionRequests(): Promise<RevisionRequest[]> {
+  const supabase = service();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("revision_requests")
+    .select(revisionSelect)
+    .order("created_at", { ascending: false });
   return error || !data ? [] : data;
 }
 

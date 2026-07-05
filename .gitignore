@@ -11,6 +11,7 @@ dist/
 *.tsbuildinfo
 
 # Local environment and secrets
+.user.ini
 .env
 .env.*
 !.env.example

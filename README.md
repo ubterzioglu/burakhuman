@@ -9,21 +9,21 @@ npm install
 npm run dev
 ```
 
-The public site works with fallback content if Supabase env vars are not configured. Admin CMS requires Supabase.
+The public site works with fallback content if Supabase env vars are not configured. Admin login uses `ADMIN_PASSWORD`; database-backed admin actions require Supabase.
 
 ## Supabase setup
 
 1. Create a Supabase project.
 2. Run `database/schema.sql` in the Supabase SQL Editor.
 3. Create a public Storage bucket named `legacy-assets`.
-4. Add an Auth user, then insert that user into `admin_profiles`:
+4. Copy `.env.example` to `.env.local` and fill Supabase, admin password/session secret, and optional SMTP values.
 
-```sql
-insert into public.admin_profiles (user_id, display_name, role)
-values ('AUTH_USER_UUID', 'Admin', 'admin');
+Admin login is a single-password flow:
+
+```bash
+ADMIN_PASSWORD=change-me
+ADMIN_SESSION_SECRET=generate-a-long-random-string
 ```
-
-5. Copy `.env.example` to `.env` and fill Supabase and optional SMTP values.
 
 ## Routes
 
@@ -34,6 +34,7 @@ values ('AUTH_USER_UUID', 'Admin', 'admin');
 - `/product1`
 - `/i/[id]-[slug]`
 - `/admin`
+- `/admin/revisions`
 
 Legacy `.aspx` URLs are redirected where applicable.
 

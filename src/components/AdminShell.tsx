@@ -1,46 +1,31 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { isSupabaseConfigured, requireAdmin } from "@/lib/supabase";
+import { isAdminAuthConfigured, isSupabaseServiceConfigured, requireAdmin } from "@/lib/supabase";
 
 const nav = [
   { href: "/admin", label: "Genel Bakis" },
   { href: "/admin/pages", label: "Icerikler" },
   { href: "/admin/categories", label: "Kategoriler" },
+  { href: "/admin/revisions", label: "Revizyonlar" },
   { href: "/admin/messages", label: "Mesajlar" },
   { href: "/admin/settings", label: "Ayarlar" },
 ];
 
 export async function AdminShell({ children }: { children: ReactNode }) {
+  if (!isAdminAuthConfigured()) {
+    return (
+      <div className="login-wrap">
+        <div className="login-card">
+          <h1>Admin ayari gerekli</h1>
+          <p>Admin paneli icin `.env.local` veya deploy ortaminda `ADMIN_PASSWORD` ve `ADMIN_SESSION_SECRET` tanimlanmali.</p>
+        </div>
+      </div>
+    );
+  }
+
   const admin = await requireAdmin();
-
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="login-wrap">
-        <div className="login-card">
-          <h1>Supabase ayari gerekli</h1>
-          <p>
-            Admin paneli icin `.env` dosyasinda `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` ve
-            `SUPABASE_SERVICE_ROLE_KEY` tanimlanmali.
-          </p>
-          <p>Public site fallback veriyle calisir; CMS islemleri Supabase baglantisi olmadan devre disidir.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!admin) {
-    return (
-      <div className="login-wrap">
-        <div className="login-card">
-          <h1>Yetki gerekli</h1>
-          <p>Admin paneline erismek icin Supabase Auth ile giris yapin.</p>
-          <Link className="button" href="/admin/login">
-            Giris yap
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (!admin) redirect("/admin/login");
 
   return (
     <div className="admin-shell">
@@ -58,7 +43,14 @@ export async function AdminShell({ children }: { children: ReactNode }) {
           <Link href="/">Siteyi Gor</Link>
         </nav>
       </aside>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        {!isSupabaseServiceConfigured() ? (
+          <div className="admin-card admin-warning">
+            Supabase service env ayarlari eksik. Panel acilir, ancak veritabanina yazan islemler calismaz.
+          </div>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }
