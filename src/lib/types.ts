@@ -85,3 +85,9 @@ export type RevisionComment = {
   body: string;
   created_at: string | null;
 };
+
+export type SiteOptionRecord = {
+  name: string;
+  value: string;
+  updated_at: string | null;
+};

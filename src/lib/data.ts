@@ -1,7 +1,7 @@
 import { legacyCategories, legacyContentTypes, legacyFiles, legacyPages, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "./legacy";
 import { isPostgresConfigured, query as dbQuery } from "./db";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "./supabase";
-import type { Category, ContentType, FileRecord, MessageRecord, PageRecord, RevisionComment, RevisionRequest } from "./types";
+import type { Category, ContentType, FileRecord, MessageRecord, PageRecord, RevisionComment, RevisionRequest, SiteOptionRecord } from "./types";
 
 const pageSelect =
   "id, sub_page_id, category_id, type_id, lang, title, summary, body, picture_url, rank, chck1, chck2, val1, val2, val3, val4, val5, val6, val7, published, created_at, updated_at";
@@ -133,6 +133,25 @@ export async function getBlogData() {
 
 export async function getContactPage() {
   return getPageById(6);
+}
+
+export async function getSiteOptions(): Promise<Record<string, string>> {
+  const supabase = service();
+  if (!supabase) {
+    if (isPostgresConfigured()) {
+      try {
+        const { rows } = await dbQuery<SiteOptionRecord>("select name, value, updated_at from site_options");
+        return Object.fromEntries(rows.map((row) => [row.name, row.value]));
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }
+
+  const { data, error } = await supabase.from("site_options").select("name, value, updated_at");
+  if (error || !data) return {};
+  return Object.fromEntries(data.map((row) => [row.name, row.value]));
 }
 
 export async function getPageImages(pageId: number): Promise<FileRecord[]> {

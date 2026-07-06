@@ -9,7 +9,12 @@ export default function AdminSettingsPage() {
         <form className="admin-form" action={saveOption}>
           <label>
             Ayar adi
-            <input className="input" name="name" placeholder="map, seo_title, footer_note" required />
+            <input
+              className="input"
+              name="name"
+              placeholder="seo_title, seo_description, site_url, geo_region, geo_placename, geo_position"
+              required
+            />
           </label>
           <label>
             Deger
