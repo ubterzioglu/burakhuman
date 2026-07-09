@@ -465,11 +465,15 @@ export async function reorderPage(formData: FormData) {
 export async function login(formData: FormData) {
   if (!isAdminAuthConfigured()) redirect("/admin/login?error=config");
   const password = String(formData.get("password") || "");
+  const returnTo = String(formData.get("return") || "");
 
-  if (!verifyAdminPassword(password)) redirect("/admin/login?error=1");
+  if (!verifyAdminPassword(password)) {
+    redirect(`/admin/login?error=1${returnTo ? `&return=${encodeURIComponent(returnTo)}` : ""}`);
+  }
 
   await setAdminSessionCookie();
-  redirect("/admin");
+  // Only allow same-app admin paths as a redirect target (avoid open redirect).
+  redirect(returnTo.startsWith("/admin") ? returnTo : "/admin");
 }
 
 const contentTypeSchema = z.object({

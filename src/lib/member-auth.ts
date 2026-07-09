@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getMemberById } from "./data";
 import type { Member } from "./types";
 
@@ -74,6 +74,16 @@ function decodeSession(token: string | undefined): MemberSessionPayload | null {
   }
 }
 
+async function cookieSecure() {
+  try {
+    const proto = (await headers()).get("x-forwarded-proto");
+    if (proto) return proto.split(",")[0].trim() === "https";
+  } catch {
+    // headers() unavailable — fall back to NODE_ENV.
+  }
+  return process.env.NODE_ENV === "production";
+}
+
 export async function setMemberSessionCookie(memberId: number) {
   if (!isMemberAuthConfigured()) throw new Error("Member auth is not configured");
   const now = Math.floor(Date.now() / 1000);
@@ -83,7 +93,7 @@ export async function setMemberSessionCookie(memberId: number) {
   cookieStore.set(memberCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await cookieSecure(),
     path: "/",
     maxAge: memberSessionMaxAge,
   });
@@ -94,7 +104,7 @@ export async function clearMemberSessionCookie() {
   cookieStore.set(memberCookieName, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await cookieSecure(),
     path: "/",
     maxAge: 0,
   });
