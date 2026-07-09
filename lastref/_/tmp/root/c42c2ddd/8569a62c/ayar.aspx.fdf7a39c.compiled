@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/ayar.aspx" hash="fffffff2dc3f8c6b" filehash="6572117c6e9dfbba" flags="110000" assembly="App_Web_1jac20vu" type="ASP.admin_ayar_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/ayar.aspx" />
+        <filedep name="/admin/ayar.aspx.cs" />
+    </filedeps>
+</preserve>

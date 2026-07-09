@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/contact.aspx" hash="fffffff2dc3f8c6b" filehash="66e8998c8f0ef7e" flags="110000" assembly="App_Web_sbacgbin" type="ASP.contact_aspx">
+    <filedeps>
+        <filedep name="/contact.aspx" />
+        <filedep name="/contact.aspx.cs" />
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+    </filedeps>
+</preserve>

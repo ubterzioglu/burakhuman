@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/signup.aspx" hash="fffffff2dc3f8c6b" filehash="5119a64ec186823f" flags="110000" assembly="App_Web_0cbxsrld" type="ASP.signup_aspx">
+    <filedeps>
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+        <filedep name="/signup.aspx" />
+        <filedep name="/signup.aspx.cs" />
+    </filedeps>
+</preserve>

@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/books.aspx" hash="fffffff2dc3f8c6b" filehash="bfb6be7a6a1caa47" flags="110000" assembly="App_Web_0cbxsrld" type="ASP.books_aspx">
+    <filedeps>
+        <filedep name="/books.aspx" />
+        <filedep name="/books.aspx.cs" />
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+    </filedeps>
+</preserve>

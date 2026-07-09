@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/Default.aspx" hash="fffffff2dc3f8c6b" filehash="e2600e85183db5f4" flags="110000" assembly="App_Web_ukwlvfj5" type="ASP.admin_default_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/Default.aspx" />
+        <filedep name="/admin/Default.aspx.cs" />
+    </filedeps>
+</preserve>

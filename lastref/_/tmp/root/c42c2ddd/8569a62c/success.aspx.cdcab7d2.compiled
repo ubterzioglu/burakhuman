@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/success.aspx" hash="fffffff2dc3f8c6b" filehash="20537e80f453580" flags="110000" assembly="App_Web_oo4px14x" type="ASP.success_aspx">
+    <filedeps>
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+        <filedep name="/success.aspx" />
+        <filedep name="/success.aspx.cs" />
+    </filedeps>
+</preserve>

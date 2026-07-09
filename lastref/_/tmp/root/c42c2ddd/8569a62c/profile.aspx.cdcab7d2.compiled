@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/profile.aspx" hash="fffffff2dc3f8c6b" filehash="ae773e175c975a97" flags="110000" assembly="App_Web_k2m4lmwz" type="ASP.profile_aspx">
+    <filedeps>
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+        <filedep name="/profile.aspx" />
+        <filedep name="/profile.aspx.cs" />
+    </filedeps>
+</preserve>

@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/medya.aspx" hash="fffffff2dc3f8c6b" filehash="1bbbba4707f20d1a" flags="110000" assembly="App_Web_eyfvjbie" type="ASP.admin_medya_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/medya.aspx" />
+        <filedep name="/admin/medya.aspx.cs" />
+    </filedeps>
+</preserve>

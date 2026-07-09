@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/siparisdetay.aspx" hash="fffffff2dc3f8c6b" filehash="fd477d7d3ac4b3f8" flags="110000" assembly="App_Web_lvdd34sj" type="ASP.admin_siparisdetay_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/siparisdetay.aspx" />
+        <filedep name="/admin/siparisdetay.aspx.cs" />
+    </filedeps>
+</preserve>

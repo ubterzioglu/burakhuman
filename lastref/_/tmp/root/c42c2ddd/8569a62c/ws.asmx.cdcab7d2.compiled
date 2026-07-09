@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="2" virtualPath="/ws.asmx" hash="ffffffff97ce8114" filehash="10e3ba2a4f99" flags="130000" assembly="App_Code.f2a3n0dx" type="ws">
+    <filedeps>
+        <filedep name="/ws.asmx" />
+    </filedeps>
+</preserve>

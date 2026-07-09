@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/kategoriler.aspx" hash="fffffff2dc3f8c6b" filehash="1661b33db7d843ad" flags="110000" assembly="App_Web_rgtmtdkj" type="ASP.admin_kategoriler_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/kategoriler.aspx" />
+        <filedep name="/admin/kategoriler.aspx.cs" />
+    </filedeps>
+</preserve>
