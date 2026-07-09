@@ -41,6 +41,33 @@ const pageSchema = z.object({
   published: z.coerce.boolean().default(false),
 });
 
+function parseTags(value: FormDataEntryValue | null): string[] {
+  return String(value ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0)
+    .filter((tag, index, all) => all.indexOf(tag) === index)
+    .slice(0, 30);
+}
+
+async function syncPageTags(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  pageId: number,
+  tags: string[],
+) {
+  if (supabase) {
+    await supabase.from("tags").delete().eq("page_id", pageId);
+    if (tags.length) {
+      await supabase.from("tags").insert(tags.map((tag) => ({ page_id: pageId, tag })));
+    }
+  } else {
+    await query("delete from tags where page_id = $1", [pageId]);
+    for (const tag of tags) {
+      await query("insert into tags (page_id, tag) values ($1, $2) on conflict (page_id, tag) do nothing", [pageId, tag]);
+    }
+  }
+}
+
 export async function savePage(formData: FormData) {
   await assertAdmin();
   const supabase = createSupabaseServiceClient();
@@ -59,6 +86,7 @@ export async function savePage(formData: FormData) {
     val3: nullableString(formData.get("val3")),
     published: formData.get("published") === "on",
   });
+  const tags = parseTags(formData.get("tags"));
 
   const payload = {
     type_id: parsed.type_id,
@@ -76,12 +104,16 @@ export async function savePage(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
+  let pageId = parsed.id ?? 0;
   if (supabase) {
-    const result = parsed.id
-      ? await supabase.from("pages").update(payload).eq("id", parsed.id)
-      : await supabase.from("pages").insert(payload);
-
-    if (result.error) throw new Error(result.error.message);
+    if (parsed.id) {
+      const { error } = await supabase.from("pages").update(payload).eq("id", parsed.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data, error } = await supabase.from("pages").insert(payload).select("id").single();
+      if (error) throw new Error(error.message);
+      pageId = data?.id ?? 0;
+    }
   } else {
     if (parsed.id) {
       await query(
@@ -107,9 +139,9 @@ export async function savePage(formData: FormData) {
         ],
       );
     } else {
-      await query(
+      const { rows } = await query<{ id: number }>(
         `insert into pages (type_id, category_id, lang, title, summary, body, picture_url, rank, val1, val2, val3, published, updated_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id`,
         [
           payload.type_id,
           payload.category_id,
@@ -126,11 +158,16 @@ export async function savePage(formData: FormData) {
           payload.updated_at,
         ],
       );
+      pageId = rows[0]?.id ?? 0;
     }
   }
+
+  if (pageId) await syncPageTags(supabase, pageId, tags);
+
   revalidatePath("/");
   revalidatePath("/blogs");
   revalidatePath("/admin/pages");
+  if (pageId) revalidatePath(`/i/${pageId}`);
   redirect("/admin/pages");
 }
 
@@ -187,17 +224,83 @@ export async function saveCategory(formData: FormData) {
   redirect("/admin/categories");
 }
 
-export async function markMessageRead(formData: FormData) {
+export async function deleteCategory(formData: FormData) {
   await assertAdmin();
   const supabase = createSupabaseServiceClient();
   const id = Number(formData.get("id"));
+  if (!id) throw new Error("Invalid category id");
+
+  let pageCount = 0;
   if (supabase) {
-    const { error } = await supabase.from("messages").update({ status: "read" }).eq("id", id);
+    const { count } = await supabase.from("pages").select("id", { count: "exact", head: true }).eq("category_id", id);
+    pageCount = count ?? 0;
+  } else {
+    const { rows } = await query<{ n: number }>("select count(*)::int as n from pages where category_id = $1", [id]);
+    pageCount = rows[0]?.n ?? 0;
+  }
+  if (pageCount > 0) redirect("/admin/categories?error=inuse");
+
+  if (supabase) {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) throw new Error(error.message);
   } else {
-    await query("update messages set status = 'read' where id = $1", [id]);
+    await query("delete from categories where id = $1", [id]);
+  }
+  revalidatePath("/admin/categories");
+  revalidatePath("/blogs");
+  redirect("/admin/categories");
+}
+
+async function setMessageStatus(id: number, status: "new" | "read" | "archived") {
+  const supabase = createSupabaseServiceClient();
+  if (supabase) {
+    const { error } = await supabase.from("messages").update({ status }).eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("update messages set status = $1 where id = $2", [status, id]);
   }
   revalidatePath("/admin/messages");
+  revalidatePath("/admin");
+}
+
+export async function markMessageRead(formData: FormData) {
+  await assertAdmin();
+  await setMessageStatus(Number(formData.get("id")), "read");
+}
+
+export async function markMessageArchived(formData: FormData) {
+  await assertAdmin();
+  await setMessageStatus(Number(formData.get("id")), "archived");
+}
+
+export async function deleteMessage(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const id = Number(formData.get("id"));
+  if (!id) throw new Error("Invalid message id");
+  if (supabase) {
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("delete from messages where id = $1", [id]);
+  }
+  revalidatePath("/admin/messages");
+  redirect("/admin/messages");
+}
+
+export async function deleteMailingEntry(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const id = Number(formData.get("id"));
+  if (!id) throw new Error("Invalid mailing entry id");
+  if (supabase) {
+    const { error } = await supabase.from("mailing_list").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("delete from mailing_list where id = $1", [id]);
+  }
+  revalidatePath("/admin/mailing");
+  redirect("/admin/mailing");
 }
 
 export async function saveOption(formData: FormData) {
@@ -222,33 +325,141 @@ export async function saveOption(formData: FormData) {
   redirect("/admin/settings");
 }
 
-export async function uploadPageImage(formData: FormData) {
+const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
+const fileExtensions = ["pdf", "zip", "rar", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pps", "epub", "mobi", "txt"];
+
+export async function uploadMedia(formData: FormData) {
   await assertAdmin();
   const supabase = createSupabaseServiceClient();
   if (!supabase) throw new Error("Supabase service role is required for Storage uploads");
-  const pageId = Number(formData.get("page_id"));
+  const albumId = Number(formData.get("album_id") || 0);
+  const kind = String(formData.get("kind") || "image") === "file" ? "file" : "image";
   const file = formData.get("file");
-  if (!pageId || !(file instanceof File) || !file.size) throw new Error("File and page id are required");
+  if (!(file instanceof File) || !file.size) throw new Error("File is required");
 
   const extension = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const path = `pages/${pageId}/${crypto.randomUUID()}.${extension}`;
+  const allowed = kind === "image" ? imageExtensions : fileExtensions;
+  if (!allowed.includes(extension)) throw new Error(`Unsupported file type: .${extension}`);
+
+  const path = `${kind === "image" ? "images" : "files"}/${albumId}/${crypto.randomUUID()}.${extension}`;
   const { error: uploadError } = await supabase.storage.from("legacy-assets").upload(path, file, {
     cacheControl: "31536000",
     upsert: false,
+    contentType: file.type || undefined,
   });
   if (uploadError) throw new Error(uploadError.message);
 
   const { data } = supabase.storage.from("legacy-assets").getPublicUrl(path);
   const { error } = await supabase.from("files").insert({
-    album_id: pageId,
-    kind: "image",
+    album_id: albumId,
+    kind,
     extension,
     title: file.name,
     file_url: data.publicUrl,
   });
   if (error) throw new Error(error.message);
+
+  const returnTo = nullableString(formData.get("return_to"));
+  if (albumId) revalidatePath(`/i/${albumId}`);
+  revalidatePath("/admin/media");
+  redirect(returnTo || (albumId ? `/admin/pages?edit=${albumId}` : "/admin/media"));
+}
+
+function storagePathFromPublicUrl(fileUrl: string): string | null {
+  const marker = "/storage/v1/object/public/legacy-assets/";
+  const index = fileUrl.indexOf(marker);
+  if (index === -1) return null;
+  return decodeURIComponent(fileUrl.slice(index + marker.length));
+}
+
+export async function deleteFile(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const id = Number(formData.get("id"));
+  const returnTo = nullableString(formData.get("return_to")) || "/admin/media";
+  if (!id) throw new Error("Invalid file id");
+
+  if (supabase) {
+    const { data: fileRow } = await supabase.from("files").select("file_url").eq("id", id).single();
+    const { error } = await supabase.from("files").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+    const path = fileRow?.file_url ? storagePathFromPublicUrl(fileRow.file_url) : null;
+    if (path) await supabase.storage.from("legacy-assets").remove([path]);
+  } else {
+    await query("delete from files where id = $1", [id]);
+  }
+  revalidatePath("/admin/media");
+  revalidatePath(returnTo);
+  redirect(returnTo);
+}
+
+export async function setPageCover(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const pageId = Number(formData.get("page_id"));
+  const fileUrl = nullableString(formData.get("file_url"));
+  if (!pageId || !fileUrl) throw new Error("Page id and file url are required");
+
+  if (supabase) {
+    const { error } = await supabase
+      .from("pages")
+      .update({ picture_url: fileUrl, updated_at: new Date().toISOString() })
+      .eq("id", pageId);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("update pages set picture_url = $1, updated_at = now() where id = $2", [fileUrl, pageId]);
+  }
   revalidatePath(`/i/${pageId}`);
-  redirect("/admin/pages");
+  revalidatePath("/admin/pages");
+  redirect(`/admin/pages?edit=${pageId}`);
+}
+
+export async function reorderPage(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const id = Number(formData.get("id"));
+  const direction = String(formData.get("direction")) === "up" ? "up" : "down";
+  if (!id) throw new Error("Invalid page id");
+
+  // Ayni tip+dil icinde komsu sayfayla rank degisimi (basit ve guvenli).
+  if (supabase) {
+    const { data: current } = await supabase.from("pages").select("id, type_id, lang, rank").eq("id", id).single();
+    if (!current) return;
+    const base = supabase
+      .from("pages")
+      .select("id, rank")
+      .eq("type_id", current.type_id)
+      .eq("lang", current.lang);
+    const filtered =
+      direction === "up"
+        ? base.lt("rank", current.rank).order("rank", { ascending: false })
+        : base.gt("rank", current.rank).order("rank", { ascending: true });
+    const { data: neighbors } = await filtered.limit(1);
+    const neighbor = neighbors?.[0];
+    if (!neighbor) return;
+    await supabase.from("pages").update({ rank: neighbor.rank }).eq("id", current.id);
+    await supabase.from("pages").update({ rank: current.rank }).eq("id", neighbor.id);
+  } else {
+    const { rows: cur } = await query<{ id: number; type_id: number; lang: string; rank: number }>(
+      "select id, type_id, lang, rank from pages where id = $1",
+      [id],
+    );
+    const current = cur[0];
+    if (!current) return;
+    const op = direction === "up" ? "<" : ">";
+    const dir = direction === "up" ? "desc" : "asc";
+    const { rows: nb } = await query<{ id: number; rank: number }>(
+      `select id, rank from pages where type_id = $1 and lang = $2 and rank ${op} $3 order by rank ${dir} limit 1`,
+      [current.type_id, current.lang, current.rank],
+    );
+    const neighbor = nb[0];
+    if (!neighbor) return;
+    await query("update pages set rank = $1 where id = $2", [neighbor.rank, current.id]);
+    await query("update pages set rank = $1 where id = $2", [current.rank, neighbor.id]);
+  }
+  revalidatePath("/admin/pages");
+  revalidatePath("/");
+  revalidatePath("/blogs");
 }
 
 export async function login(formData: FormData) {
@@ -259,6 +470,140 @@ export async function login(formData: FormData) {
 
   await setAdminSessionCookie();
   redirect("/admin");
+}
+
+const contentTypeSchema = z.object({
+  id: z.coerce.number().optional(),
+  name: z.string().trim().min(1).max(120),
+  title_label: z.string().trim().max(120).nullable().optional(),
+  summary_label: z.string().trim().max(120).nullable().optional(),
+  text_label: z.string().trim().max(120).nullable().optional(),
+  has_picture: z.coerce.boolean().default(false),
+  has_categories: z.coerce.boolean().default(false),
+  has_tags: z.coerce.boolean().default(false),
+  has_sub_images: z.coerce.boolean().default(false),
+  has_sub_files: z.coerce.boolean().default(false),
+  is_protected: z.coerce.boolean().default(false),
+});
+
+export async function saveContentType(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const parsed = contentTypeSchema.parse({
+    id: nullableString(formData.get("id")) || undefined,
+    name: formData.get("name"),
+    title_label: nullableString(formData.get("title_label")),
+    summary_label: nullableString(formData.get("summary_label")),
+    text_label: nullableString(formData.get("text_label")),
+    has_picture: formData.get("has_picture") === "on",
+    has_categories: formData.get("has_categories") === "on",
+    has_tags: formData.get("has_tags") === "on",
+    has_sub_images: formData.get("has_sub_images") === "on",
+    has_sub_files: formData.get("has_sub_files") === "on",
+    is_protected: formData.get("is_protected") === "on",
+  });
+
+  const payload = {
+    name: parsed.name,
+    title_label: parsed.title_label,
+    summary_label: parsed.summary_label,
+    text_label: parsed.text_label,
+    has_picture: parsed.has_picture,
+    has_categories: parsed.has_categories,
+    has_tags: parsed.has_tags,
+    has_sub_images: parsed.has_sub_images,
+    has_sub_files: parsed.has_sub_files,
+    is_protected: parsed.is_protected,
+  };
+
+  if (supabase) {
+    if (parsed.id) {
+      const { error } = await supabase.from("content_types").update(payload).eq("id", parsed.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: maxRow } = await supabase.from("content_types").select("id").order("id", { ascending: false }).limit(1);
+      const nextId = (maxRow?.[0]?.id ?? 0) + 1;
+      const { error } = await supabase.from("content_types").insert({ id: nextId, ...payload });
+      if (error) throw new Error(error.message);
+    }
+  } else if (parsed.id) {
+    await query(
+      `update content_types set name = $1, title_label = $2, summary_label = $3, text_label = $4,
+       has_picture = $5, has_categories = $6, has_tags = $7, has_sub_images = $8, has_sub_files = $9, is_protected = $10
+       where id = $11`,
+      [
+        payload.name,
+        payload.title_label,
+        payload.summary_label,
+        payload.text_label,
+        payload.has_picture,
+        payload.has_categories,
+        payload.has_tags,
+        payload.has_sub_images,
+        payload.has_sub_files,
+        payload.is_protected,
+        parsed.id,
+      ],
+    );
+  } else {
+    await query(
+      `insert into content_types (id, name, title_label, summary_label, text_label,
+        has_picture, has_categories, has_tags, has_sub_images, has_sub_files, is_protected)
+       values ((select coalesce(max(id), 0) + 1 from content_types), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        payload.name,
+        payload.title_label,
+        payload.summary_label,
+        payload.text_label,
+        payload.has_picture,
+        payload.has_categories,
+        payload.has_tags,
+        payload.has_sub_images,
+        payload.has_sub_files,
+        payload.is_protected,
+      ],
+    );
+  }
+  revalidatePath("/admin/types");
+  revalidatePath("/admin/pages");
+  redirect("/admin/types");
+}
+
+export async function deleteContentType(formData: FormData) {
+  await assertAdmin();
+  const supabase = createSupabaseServiceClient();
+  const id = Number(formData.get("id"));
+  if (!id) throw new Error("Invalid content type id");
+
+  // Bagli icerik/kategori varsa silme (veri butunlugu).
+  let pageCount = 0;
+  let categoryCount = 0;
+  if (supabase) {
+    const [{ count: pc }, { count: cc }] = await Promise.all([
+      supabase.from("pages").select("id", { count: "exact", head: true }).eq("type_id", id),
+      supabase.from("categories").select("id", { count: "exact", head: true }).eq("type_id", id),
+    ]);
+    pageCount = pc ?? 0;
+    categoryCount = cc ?? 0;
+  } else {
+    const { rows: pr } = await query<{ n: number }>("select count(*)::int as n from pages where type_id = $1", [id]);
+    const { rows: cr } = await query<{ n: number }>("select count(*)::int as n from categories where type_id = $1", [id]);
+    pageCount = pr[0]?.n ?? 0;
+    categoryCount = cr[0]?.n ?? 0;
+  }
+
+  if (pageCount > 0 || categoryCount > 0) {
+    redirect("/admin/types?error=inuse");
+  }
+
+  if (supabase) {
+    const { error } = await supabase.from("content_types").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    await query("delete from content_types where id = $1", [id]);
+  }
+  revalidatePath("/admin/types");
+  redirect("/admin/types");
 }
 
 const revisionSchema = z.object({

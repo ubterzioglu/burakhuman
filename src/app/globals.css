@@ -814,3 +814,98 @@ img {
     margin: 0 0 22px;
   }
 }
+
+/* --- Parity additions (tags, newsletter, member auth, orders) --- */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #eef1f6;
+  color: #333;
+  font-size: 13px;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.newsletter-form input {
+  flex: 1 1 220px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.auth-wrap {
+  max-width: 460px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.auth-card {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 28px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+}
+
+.auth-card h1 {
+  margin-top: 0;
+}
+
+.auth-card label {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.auth-card input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.auth-error {
+  background: #fdecec;
+  color: #a12626;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.auth-note {
+  background: #eef7ee;
+  color: #256b25;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.footer-newsletter strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.filter-bar a.active {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.status-pill.status-pending { background: #fff4e0; color: #96601a; }
+.status-pill.status-paid { background: #e6f0ff; color: #24508f; }
+.status-pill.status-completed { background: #e6f6e9; color: #256b34; }
+.status-pill.status-cancelled { background: #f1f1f1; color: #777; }

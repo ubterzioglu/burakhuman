@@ -91,3 +91,67 @@ export type SiteOptionRecord = {
   value: string;
   updated_at: string | null;
 };
+
+export type MemberStatus = "pending" | "active" | "blocked";
+
+export type Member = {
+  id: number;
+  email: string;
+  password_hash: string;
+  full_name: string;
+  country: string | null;
+  status: MemberStatus;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type Product = {
+  id: number;
+  slug: string;
+  title: string;
+  price_cents: number;
+  currency: string;
+  active: boolean;
+  created_at: string | null;
+};
+
+export type OrderStatus = "pending" | "paid" | "completed" | "cancelled";
+
+export type Order = {
+  id: number;
+  guid: string;
+  product_id: number;
+  member_id: number;
+  buyer_name: string | null;
+  amount_cents: number;
+  currency: string;
+  status: OrderStatus;
+  admin_note: string | null;
+  paypal_order_id: string | null;
+  paypal_capture_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type ProductAssetKind = "mobi" | "epub" | "pdf" | "cover";
+
+export type ProductAsset = {
+  id: number;
+  product_id: number;
+  kind: ProductAssetKind;
+  storage_path: string;
+  filename: string;
+  created_at: string | null;
+};
+
+export type BankAccount = {
+  id: number;
+  bank_name: string;
+  account_name: string;
+  branch_name: string | null;
+  branch_code: string | null;
+  account_no: string | null;
+  iban: string | null;
+  rank: number;
+  created_at: string | null;
+};

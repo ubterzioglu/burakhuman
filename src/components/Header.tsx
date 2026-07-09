@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { getCurrentMember } from "@/lib/member-auth";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -11,7 +12,9 @@ const navItems = [
   { href: "http://humanconsciousnessdecoded.org", label: "HCD.ORG", external: true },
 ];
 
-export function Header() {
+export async function Header() {
+  const member = await getCurrentMember();
+
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -37,6 +40,14 @@ export function Header() {
               {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
             </Link>
           ))}
+          {member ? (
+            <>
+              <Link href="/profile">Profile</Link>
+              <a href="/logout">Logout</a>
+            </>
+          ) : (
+            <Link href="/login">Login</Link>
+          )}
         </nav>
       </div>
     </header>

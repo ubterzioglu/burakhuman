@@ -3,9 +3,11 @@ import { getAdminDashboardData, TYPE_BLOG, TYPE_PAGE, TYPE_SLIDER } from "@/lib/
 import { missingItems } from "@/lib/missing-items";
 
 export default async function AdminPage() {
-  const { pages, categories, messages, revisions } = await getAdminDashboardData();
+  const { pages, categories, messages, revisions, members, orders } = await getAdminDashboardData();
   const openRevisions = revisions.filter((revision) => !["done", "rejected"].includes(revision.status));
   const highPriorityMissing = missingItems.filter((item) => item.priority === "high");
+  const pendingMembers = members.filter((member) => member.status === "pending").length;
+  const openOrders = orders.filter((order) => order.status === "pending" || order.status === "paid").length;
 
   return (
     <AdminShell>
@@ -33,6 +35,22 @@ export default async function AdminPage() {
         <div className="metric">
           <span>Toplam Revizyon</span>
           <strong>{revisions.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Uye</span>
+          <strong>{members.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Onay Bekleyen Uye</span>
+          <strong>{pendingMembers}</strong>
+        </div>
+        <div className="metric">
+          <span>Siparis</span>
+          <strong>{orders.length}</strong>
+        </div>
+        <div className="metric">
+          <span>Acik Siparis</span>
+          <strong>{openOrders}</strong>
         </div>
         <div className="metric">
           <span>Eksik Kalan</span>
