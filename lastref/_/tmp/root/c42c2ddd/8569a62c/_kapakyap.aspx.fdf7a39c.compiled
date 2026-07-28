@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/_kapakyap.aspx" hash="fffffff2dc3f8c6b" filehash="4fa04541378e6e3d" flags="110000" assembly="App_Web_syokkaqm" type="ASP.admin__kapakyap_aspx">
+    <filedeps>
+        <filedep name="/admin/_kapakyap.aspx" />
+        <filedep name="/admin/_kapakyap.aspx.cs" />
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+    </filedeps>
+</preserve>

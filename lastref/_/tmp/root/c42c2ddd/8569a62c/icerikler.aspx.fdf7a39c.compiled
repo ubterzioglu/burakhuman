@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/icerikler.aspx" hash="fffffff2dc3f8c6b" filehash="23e5095dffb40c69" flags="110000" assembly="App_Web_1npo3n2z" type="ASP.admin_icerikler_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/icerikler.aspx" />
+        <filedep name="/admin/icerikler.aspx.cs" />
+    </filedeps>
+</preserve>

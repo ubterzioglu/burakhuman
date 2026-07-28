@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/maillist.aspx" hash="fffffff2dc3f8c6b" filehash="ebd9a706d9aa2219" flags="110000" assembly="App_Web_syokkaqm" type="ASP.admin_maillist_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/maillist.aspx" />
+        <filedep name="/admin/maillist.aspx.cs" />
+    </filedeps>
+</preserve>

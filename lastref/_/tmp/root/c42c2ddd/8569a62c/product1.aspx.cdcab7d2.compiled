@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/product1.aspx" hash="fffffff2dc3f8c6b" filehash="c859f5f76cf3b82f" flags="110000" assembly="App_Web_cypoptme" type="ASP.product1_aspx">
+    <filedeps>
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+        <filedep name="/product1.aspx" />
+        <filedep name="/product1.aspx.cs" />
+    </filedeps>
+</preserve>

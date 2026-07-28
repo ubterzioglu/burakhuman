@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { isPostgresConfigured } from "./db";
 
 export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -92,6 +92,19 @@ export function verifyAdminPassword(password: string) {
   return equalText(password, adminPassword);
 }
 
+// Only mark the cookie Secure when the request is actually HTTPS. Otherwise a
+// production deploy served over HTTP (or an HTTP proxy hop) makes the browser
+// drop the Secure cookie, so every admin page re-prompts for the password.
+async function cookieSecure() {
+  try {
+    const proto = (await headers()).get("x-forwarded-proto");
+    if (proto) return proto.split(",")[0].trim() === "https";
+  } catch {
+    // headers() unavailable in this context — fall back to NODE_ENV.
+  }
+  return process.env.NODE_ENV === "production";
+}
+
 export async function setAdminSessionCookie() {
   if (!isAdminAuthConfigured()) throw new Error("Admin auth is not configured");
 
@@ -106,7 +119,7 @@ export async function setAdminSessionCookie() {
   cookieStore.set(adminCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await cookieSecure(),
     path: "/",
     maxAge: adminSessionMaxAge,
   });
@@ -117,7 +130,7 @@ export async function clearAdminSessionCookie() {
   cookieStore.set(adminCookieName, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: await cookieSecure(),
     path: "/",
     maxAge: 0,
   });

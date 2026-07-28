@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/hesap.aspx" hash="fffffff2dc3f8c6b" filehash="d515c6ef474ffdb4" flags="110000" assembly="App_Web_432fnagl" type="ASP.admin_hesap_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/hesap.aspx" />
+        <filedep name="/admin/hesap.aspx.cs" />
+    </filedeps>
+</preserve>

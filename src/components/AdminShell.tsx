@@ -6,9 +6,16 @@ import { isAdminAuthConfigured, isSupabaseServiceConfigured, requireAdmin } from
 const nav = [
   { href: "/admin", label: "Genel Bakis" },
   { href: "/admin/pages", label: "Icerikler" },
+  { href: "/admin/types", label: "Icerik Tipleri" },
   { href: "/admin/categories", label: "Kategoriler" },
+  { href: "/admin/media", label: "Medya" },
+  { href: "/admin/members", label: "Uyeler" },
+  { href: "/admin/orders", label: "Siparisler" },
+  { href: "/admin/bank-accounts", label: "Banka Hesaplari" },
+  { href: "/admin/mailing", label: "Mail Listesi" },
   { href: "/admin/revisions", label: "Revizyonlar" },
   { href: "/admin/missing", label: "Eksik Kalanlar" },
+  { href: "/admin/rapor", label: "Durum Raporu" },
   { href: "/admin/messages", label: "Mesajlar" },
   { href: "/admin/settings", label: "Ayarlar" },
 ];

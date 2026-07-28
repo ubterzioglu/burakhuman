@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/_sil.aspx" hash="fffffff2dc3f8c6b" filehash="a4ec7d250ae9e2b3" flags="110000" assembly="App_Web_rgtmtdkj" type="ASP.admin__sil_aspx">
+    <filedeps>
+        <filedep name="/admin/_sil.aspx" />
+        <filedep name="/admin/_sil.aspx.cs" />
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+    </filedeps>
+</preserve>

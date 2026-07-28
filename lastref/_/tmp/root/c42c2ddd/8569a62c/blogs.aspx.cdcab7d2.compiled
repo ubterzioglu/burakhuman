@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/blogs.aspx" hash="fffffff2dc3f8c6b" filehash="c91296af8a6a1f4c" flags="110000" assembly="App_Web_j31f0eyh" type="ASP.blogs_aspx">
+    <filedeps>
+        <filedep name="/blogs.aspx" />
+        <filedep name="/blogs.aspx.cs" />
+        <filedep name="/MasterPage.master" />
+        <filedep name="/MasterPage.master.cs" />
+    </filedeps>
+</preserve>

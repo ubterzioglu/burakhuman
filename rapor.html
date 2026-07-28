@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HCD — lastref → Next.js Parity Durum Raporu</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2333; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #2f5fe0; --ok: #1f8a4c; --warn: #b26a00; --bad: #b3261e;
+    --ok-bg: #e7f6ec; --warn-bg: #fdf3e3; --bad-bg: #fbe9e7; --info-bg: #e9eefc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12141a; --card: #1b1e26; --ink: #e7e9ee; --muted: #9aa1ad; --line: #2b2f3a;
+      --accent: #7aa0ff; --ok: #59d18c; --warn: #e0a961; --bad: #ef8a80;
+      --ok-bg: #16321f; --warn-bg: #33270f; --bad-bg: #3a1c19; --info-bg: #1a2340;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+  header.top { margin-bottom: 28px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 21px; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+  h3 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 14px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 16px 0; }
+  .metric { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .metric span { display: block; color: var(--muted); font-size: 13px; }
+  .metric strong { font-size: 26px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  .scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  code { background: var(--info-bg); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.info { background: var(--info-bg); color: var(--accent); }
+  ul { margin: 8px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  .note { border-left: 4px solid var(--accent); background: var(--info-bg); padding: 10px 14px; border-radius: 0 8px 8px 0; }
+  .warnbox { border-left: 4px solid var(--warn); background: var(--warn-bg); padding: 10px 14px; border-radius: 0 8px 8px 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+  .files { columns: 2; column-gap: 24px; font-size: 13.5px; }
+  @media (max-width: 720px) { .files { columns: 1; } }
+  .files code { display: inline-block; margin: 2px 0; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>HCD — Legacy (lastref) → Next.js Fonksiyonel Parity Raporu</h1>
+  <p class="sub">ASP.NET Web Forms + MySQL referans projesinin, mevcut Next.js 15 + Supabase stack'ine fonksiyonel olarak eşitlenmesi. &nbsp;·&nbsp; Tarih: 2026-07-09</p>
+</header>
+
+<!-- 1 -->
+<h2>1. Genel Özet</h2>
+<div class="card">
+  <p><strong>lastref</strong> (<code>lastref/_/httpdocs</code>): ASP.NET Web Forms (.aspx / C# code-behind), <strong>MySQL</strong> (<code>hcd_db</code>), CKEditor + jQuery temalı, Türkçe admin + İngilizce public bir <strong>e-ticaret + blog</strong> sitesi (HCD e-kitap).</p>
+  <p><strong>Mevcut proje</strong> (<code>src/</code>): Next.js 15 App Router, React Server Components + server actions, çift veri arka ucu (Supabase service-role → doğrudan <code>pg</code> → hardcoded fallback), env-parola tabanlı admin auth.</p>
+  <p>Mevcut proje CMS/blog kısmını zaten taşımış, e-ticaret (üyelik/sipariş/PayPal) kısmını bilinçli olarak "Faz 2" diye ertelemişti. Bu çalışmada <strong>tam fonksiyonel parity</strong> hedeflendi: hem tüm CMS boşlukları hem de tam e-ticaret modülü, yeni stack bozulmadan ve eski güvensiz desenler (plaintext parola, string-concat SQL, doğrulamasız PayPal) <strong>modernize edilerek</strong> eklendi.</p>
+  <div class="grid">
+    <div class="metric"><span>Değiştirilen dosya</span><strong>20</strong></div>
+    <div class="metric"><span>Yeni dosya/klasör</span><strong>21</strong></div>
+    <div class="metric"><span>Yeni admin ekranı</span><strong>6</strong></div>
+    <div class="metric"><span>Yeni public sayfa/route</span><strong>9</strong></div>
+    <div class="metric"><span>typecheck / lint / build</span><strong>✓ temiz</strong></div>
+  </div>
+  <p class="sub">Doğrulama: <code>npx tsc --noEmit</code>, <code>npx eslint .</code> ve <code>npm run build</code> (36 route) hatasız tamamlandı.</p>
+</div>
+
+<!-- 2 -->
+<h2>2. lastref'te Bulunan Özellikler (Envanter)</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Alan</th><th>Legacy kaynak</th><th>İşlev</th></tr></thead>
+    <tbody>
+      <tr><td>Ana sayfa</td><td>Default.aspx</td><td>Slider (TypeID=3), kurumsal blok (PageId=7), blog kategorileri, blog grid (TypeID=2), fiyat kartları</td></tr>
+      <tr><td>Blog / içerik</td><td>blogs.aspx, icerik.aspx</td><td>Blog listesi + kategori filtre; <code>i/{id}-{ad}</code> içerik detayı, alt galeri (files)</td></tr>
+      <tr><td>Kitap / ürün</td><td>books.aspx, product1.aspx</td><td>Pazarlama sayfaları; üye girişli e-kitap satın alma + korumalı indirme</td></tr>
+      <tr><td>İletişim</td><td>contact + ws.FormGonder</td><td>İletişim formu → messages + mail</td></tr>
+      <tr><td>Üyelik</td><td>signup/login/logout/profile.aspx, uye, usersessions</td><td>Kayıt, giriş (Status onayı), profil + sipariş geçmişi</td></tr>
+      <tr><td>Ödeme</td><td>App_Code/paypal.cs, success/failed.aspx, siparis</td><td>PayPal _xclick, dönüş URL'inde sipariş onayı (doğrulamasız)</td></tr>
+      <tr><td>Admin CMS</td><td>icerik(ler), iceriksirala, kategori(ler), type(s)</td><td>İçerik CRUD, sıralama, kategori CRUD, içerik tipi (şema sürücüsü)</td></tr>
+      <tr><td>Admin medya</td><td>medya, file(s).aspx, _kapakyap</td><td>Global medya, albüm galerileri, resize (thumb/kucuk/orta/buyuk), kapak</td></tr>
+      <tr><td>Admin ticaret</td><td>uyeler, siparisler, siparisdetay, hesaplar</td><td>Üye onayı, sipariş listesi/detay/onay, banka hesapları</td></tr>
+      <tr><td>Admin diğer</td><td>ayar, mesaj(lar), maillist, profil</td><td>Ayarlar (options/SEO), mesajlar, bülten, admin parola</td></tr>
+      <tr><td>Web servis</td><td>ws.asmx</td><td>editoption, tag sil, reorder, userlogin, FormGonder, MailEkle, GetReferences</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">DB tabloları: <code>pages, type, categories, files, etiket, languages, options, uye, usersessions, admin, adminsessions, siparis, hesaplar, messages, maillist, log</code> (+ ölü <code>hizmet</code>).</p>
+</div>
+
+<!-- 3 -->
+<h2>3. Bizim Projede (Baştan Beri) Mevcut Olanlar</h2>
+<div class="card">
+  <ul>
+    <li>Public: ana sayfa (slider/about/blog/pricing), <code>/blogs</code>, <code>/books</code>, <code>/i/[slug]</code>, <code>/contact</code> (+form → <code>/api/contact</code> + mail).</li>
+    <li>Admin (env-parola + HMAC cookie): dashboard, içerik CRUD, kategori ekle, mesaj (okundu), ayar (key/value), revizyon takibi, "eksik kalanlar" raporu.</li>
+    <li>Veri katmanı: <code>content_types, categories, pages, files, tags, messages, mailing_list, site_options, revision_*</code> şeması + Supabase/pg/fallback resolver.</li>
+    <li>Modernize edilmiş kalemler: admin auth (çoklu admin yerine env-parola), görünüm (jQuery pluginleri yerine React/CSS).</li>
+  </ul>
+</div>
+
+<!-- 4 -->
+<h2>4. Eksik Olup Bu Çalışmada Tamamlananlar</h2>
+
+<h3>4a. CMS Parity</h3>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Özellik</th><th>Durum</th><th>Ne eklendi</th></tr></thead>
+    <tbody>
+      <tr><td>İçerik tipi yönetimi</td><td><span class="pill ok">Tamamlandı</span></td><td><code>/admin/types</code> CRUD (label + <code>has_*</code> bayrakları). İçerik formu seçili tipin bayrak/label'larına göre dinamik (<code>PageForm.tsx</code>).</td></tr>
+      <tr><td>Etiketler (tags)</td><td><span class="pill ok">Tamamlandı</span></td><td>İçerik formunda tag girişi (<code>has_tags</code> tiplerinde), blog detayında chip + metadata keywords.</td></tr>
+      <tr><td>Mailing list</td><td><span class="pill ok">Tamamlandı</span></td><td>Footer public abonelik formu + <code>/api/newsletter</code> (dedup), <code>/admin/mailing</code> liste + CSV export + sil.</td></tr>
+      <tr><td>Medya kütüphanesi</td><td><span class="pill ok">Tamamlandı</span></td><td><code>/admin/media</code> global depo, görsel+dosya yükleme (uzantı whitelist), silme (Storage'dan da), içerik ekranında galeri + kapak yapma.</td></tr>
+      <tr><td>Kategori edit/sil</td><td><span class="pill ok">Tamamlandı</span></td><td>Kategori düzenleme + silme (bağlı içerik koruması).</td></tr>
+      <tr><td>Mesaj arşiv/sil + filtre</td><td><span class="pill ok">Tamamlandı</span></td><td>Okundu/arşivle/sil + durum filtresi (new/read/archived).</td></tr>
+      <tr><td>İçerik sıralama</td><td><span class="pill ok">Tamamlandı</span></td><td>İçerik listesinde rank ↑/↓ (komşu ile takas).</td></tr>
+      <tr><td>SEO options → metadata</td><td><span class="pill ok">Tamamlandı</span></td><td><code>site_options</code> (seo_title/seo_description/og_image) → Next metadata + Open Graph; <code>/admin/settings</code> gelişmiş.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>4b. E-ticaret / Üyelik Modülü</h3>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Özellik</th><th>Durum</th><th>Ne eklendi</th></tr></thead>
+    <tbody>
+      <tr><td>Üyelik (auth)</td><td><span class="pill ok">Tamamlandı</span></td><td><code>/signup</code>, <code>/login</code>, <code>/logout</code>, <code>/profile</code>. <code>members</code> tablosu + <strong>scrypt hash</strong> + HMAC imzalı cookie (<code>member-auth.ts</code>). Kayıt sonrası admin onayı bekler. Header dinamik.</td></tr>
+      <tr><td>Sipariş + geçmiş</td><td><span class="pill ok">Tamamlandı</span></td><td><code>orders</code>/<code>products</code> tabloları, profilde sipariş geçmişi, <code>hasCompletedOrder</code> yetki kontrolü.</td></tr>
+      <tr><td>PayPal ödeme</td><td><span class="pill warn">Kod hazır · env gerekli</span></td><td>Orders v2: server-side create + <strong>capture + webhook imza doğrulama</strong> (return-url'e güvenilmiyor). Fiyat DB'den. <code>/checkout/success</code>+<code>/cancel</code>.</td></tr>
+      <tr><td>Korumalı indirme</td><td><span class="pill warn">Kod hazır · dosya gerekli</span></td><td><code>/download/[format]</code>: üye + completed sipariş → private bucket'tan 60sn signed URL. Admin <code>uploadProductAsset</code>.</td></tr>
+      <tr><td>Banka hesapları</td><td><span class="pill ok">Tamamlandı</span></td><td><code>/admin/bank-accounts</code> CRUD; product1'de havale talimatı.</td></tr>
+      <tr><td>Admin üye/sipariş</td><td><span class="pill ok">Tamamlandı</span></td><td><code>/admin/members</code> (onay/engelle), <code>/admin/orders</code> + <code>/orders/[id]</code> (durum toggle, admin notu, sil).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Güvenlik modernizasyonu: eski sitedeki plaintext parola → <strong>scrypt</strong>; string-concat SQL → <strong>parametreli sorgular</strong>; doğrulamasız PayPal return → <strong>server-side capture + webhook imza doğrulama</strong>; herkese açık dosya → <strong>private bucket + kısa ömürlü signed URL</strong>.</p>
+</div>
+
+<!-- 5 -->
+<h2>5. Tamamlanamayan / Emin Olunamayan Noktalar</h2>
+<div class="card">
+  <ul>
+    <li><strong>PayPal canlı akış</strong>: Kod tam; ancak <code>PAYPAL_CLIENT_ID/SECRET/WEBHOOK_ID</code> ve <code>NEXT_PUBLIC_PAYPAL_CLIENT_ID</code> sağlanmadan uçtan uca test edilemez. Env yoksa UI otomatik olarak <strong>banka havale-only</strong>'a düşer (güvenli gated davranış, mail.ts gibi).</li>
+    <li><strong>Gerçek e-kitap dosyaları</strong>: <code>.epub/.mobi/.pdf</code> + kapak elde yok; korumalı indirme, admin panelinden private <code>member-assets</code> bucket'ına yükleme yapılınca çalışır.</li>
+    <li><strong>Veri migration</strong>: Eski MySQL <code>hcd_db</code> dump'ı repoda yok. İçerik/üye/sipariş <strong>verisi</strong> taşınmadı (yalnız şema + fallback). Eski parolalar plaintext olduğundan güvenli taşınamaz → üyeler yeniden kayıt / parola sıfırlama gerekir.</li>
+    <li><strong>Supabase Storage bağımlılığı</strong>: pg-only/fallback modda PayPal capture çalışır ama korumalı indirme <code>503</code> döner (Storage gerekir).</li>
+    <li><strong>SEO/analytics</strong>: options→metadata bağlandı; eski Google Analytics (UA) ve ShareThis birebir taşınmadı (GA4/tag-manager kararı bekliyor).</li>
+    <li><strong>Parola sıfırlama</strong> (legacy <code>forget.aspx</code> zaten eksikti) eklenmedi — opsiyonel sonraki adım.</li>
+  </ul>
+</div>
+
+<!-- 6 -->
+<h2>6. Değiştirilen / Eklenen Dosyalar</h2>
+<div class="cols">
+  <div class="card">
+    <h3>Değiştirilen (20)</h3>
+    <div class="files">
+      <code>database/schema.sql</code>
+      <code>next.config.ts</code>
+      <code>eslint.config.mjs</code>
+      <code>.env.example</code>
+      <code>src/lib/admin-actions.ts</code>
+      <code>src/lib/data.ts</code>
+      <code>src/lib/types.ts</code>
+      <code>src/lib/missing-items.ts</code>
+      <code>src/app/layout.tsx</code>
+      <code>src/app/product1/page.tsx</code>
+      <code>src/app/i/[slug]/page.tsx</code>
+      <code>src/app/globals.css</code>
+      <code>src/app/admin/page.tsx</code>
+      <code>src/app/admin/pages/page.tsx</code>
+      <code>src/app/admin/categories/page.tsx</code>
+      <code>src/app/admin/messages/page.tsx</code>
+      <code>src/app/admin/settings/page.tsx</code>
+      <code>src/components/AdminShell.tsx</code>
+      <code>src/components/Header.tsx</code>
+      <code>src/components/Footer.tsx</code>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Yeni (21)</h3>
+    <div class="files">
+      <code>src/lib/member-auth.ts</code>
+      <code>src/lib/member-actions.ts</code>
+      <code>src/lib/paypal.ts</code>
+      <code>src/app/signup/page.tsx</code>
+      <code>src/app/login/page.tsx</code>
+      <code>src/app/logout/route.ts</code>
+      <code>src/app/profile/page.tsx</code>
+      <code>src/app/product1/BuyButton.tsx</code>
+      <code>src/app/checkout/success/page.tsx</code>
+      <code>src/app/checkout/cancel/page.tsx</code>
+      <code>src/app/download/[format]/route.ts</code>
+      <code>src/app/api/newsletter/route.ts</code>
+      <code>src/app/api/paypal/create-order/route.ts</code>
+      <code>src/app/api/paypal/capture/route.ts</code>
+      <code>src/app/api/paypal/webhook/route.ts</code>
+      <code>src/app/admin/types/page.tsx</code>
+      <code>src/app/admin/media/page.tsx</code>
+      <code>src/app/admin/mailing/page.tsx</code>
+      <code>src/app/admin/members/page.tsx</code>
+      <code>src/app/admin/orders/page.tsx</code>
+      <code>src/app/admin/orders/[id]/page.tsx</code>
+      <code>src/app/admin/bank-accounts/page.tsx</code>
+      <code>src/app/admin/pages/PageForm.tsx</code>
+      <code>src/components/NewsletterForm.tsx</code>
+    </div>
+    <p class="sub">Not: "Yeni" bazı klasörler birden çok dosya içerir (ör. api/paypal 3 route). Silme yapılmadı; yeni stack korundu.</p>
+  </div>
+</div>
+
+<!-- 7 -->
+<h2>7. Riskler ve Önerilen Sonraki Adımlar</h2>
+<div class="card">
+  <div class="warnbox"><strong>Güvenlik:</strong> <code>.env.local</code> içinde canlı Supabase service-role anahtarı ve DATABASE_URL parolası repoda commit'li. Bu çalışmada dokunulmadı; ancak anahtarların <strong>rotate edilmesi</strong> ve <code>.env.local</code>'ın git geçmişinden temizlenmesi önerilir.</div>
+  <h3>Kurulum adımları (operatör)</h3>
+  <ol>
+    <li><code>database/schema.sql</code>'i Supabase SQL Editor'de çalıştır (yeni e-ticaret tabloları dahil).</li>
+    <li>Supabase'de <strong>public</strong> <code>legacy-assets</code> ve <strong>private</strong> <code>member-assets</code> bucket'larını oluştur.</li>
+    <li><code>MEMBER_SESSION_SECRET</code> (rastgele uzun) ekle; istenirse PayPal env değerlerini gir.</li>
+    <li>Admin panelinden gerçek e-kitap dosyalarını (<code>epub/mobi/pdf/cover</code>) yükle.</li>
+  </ol>
+  <h3>Önerilen sonraki adımlar</h3>
+  <ul>
+    <li>Eski MySQL verisinin (içerik/kategori/dosya/üye) Supabase'e aktarımı için bir migration script'i.</li>
+    <li>Parola sıfırlama (forget) akışı ve üye e-posta doğrulaması.</li>
+    <li>PayPal sandbox ile uçtan uca ödeme→capture→webhook→indirme testi.</li>
+    <li>GA4 / OG image stratejisi ve legacy analytics kararı.</li>
+    <li>İçerik/kategori/tip/sipariş silmelerinde bağlı-kayıt koruması eklendi; medya fiziksel silme yalnız Supabase Storage'a sınırlı — pg-only deployda dosya artıkları manuel temizlenmeli.</li>
+  </ul>
+</div>
+
+<footer>
+  Bu rapor otomatik oluşturuldu. Kaynak analiz: <code>lastref/_/httpdocs</code> (ASP.NET) vs <code>src/</code> (Next.js). Commit atılmadı, silme yapılmadı.
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const legacyPages = ["default", "anasayfa", "books", "blogs", "contact", "product1", "login", "signup", "profile"];
+const legacyPages = ["default", "anasayfa", "books", "blogs", "contact", "product1", "login", "signup", "profile", "logout"];
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -14,9 +14,7 @@ const nextConfig: NextConfig = {
       { source: "/anasayfa", destination: "/", permanent: true },
       ...legacyPages
         .filter((page) => !["default", "anasayfa"].includes(page))
-        .flatMap((page) => [
-          { source: `/${page}.aspx`, destination: page === "login" || page === "signup" || page === "profile" ? "/books" : `/${page}`, permanent: true },
-        ]),
+        .flatMap((page) => [{ source: `/${page}.aspx`, destination: `/${page}`, permanent: true }]),
     ];
   },
 };

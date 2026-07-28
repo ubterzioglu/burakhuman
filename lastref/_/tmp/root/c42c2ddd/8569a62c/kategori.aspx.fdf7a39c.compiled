@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<preserve resultType="3" virtualPath="/admin/kategori.aspx" hash="fffffff2dc3f8c6b" filehash="ec3676c9fa3f5d8a" flags="110000" assembly="App_Web_tubxowbm" type="ASP.admin_kategori_aspx">
+    <filedeps>
+        <filedep name="/admin/admin.master" />
+        <filedep name="/admin/admin.master.cs" />
+        <filedep name="/admin/kategori.aspx" />
+        <filedep name="/admin/kategori.aspx.cs" />
+    </filedeps>
+</preserve>
