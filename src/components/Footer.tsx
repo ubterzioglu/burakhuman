@@ -5,16 +5,36 @@ export function Footer() {
         <p>Copyright © HCD BURAK AKCAKANAT</p>
         <p>
           <a
-            href="https://ufuksoynakliyat.com.tr/tuzla-evden-eve-nakliyat"
+            href="https://lionerotik.com/urunler/fetis-urunleri"
             rel="dofollow"
           >
-            Tuzla Evden Eve Nakliyat
+            Antalya Seks Shop
           </a>{" "}
-          Firmas\u0131 Ufuksoy Nakliyat A.\u015e
+          Lion Erotik
         </p>
         <p>
           Coding by <a href="http://www.yazarge.com">YAZARGE</a>
         </p>
+        <div className="footer-partners">
+          <p>
+            <a
+              href="https://ufuksoynakliyat.com.tr/tuzla-evden-eve-nakliyat"
+              rel="dofollow"
+            >
+              Tuzla Evden Eve Nakliyat
+            </a>{" "}
+            Firması Ufuksoy Nakliyat A.Ş
+          </p>
+          <p>
+            <a
+              href="https://tekhurdametal.com/hurda-demir-fiyatlari/"
+              rel="dofollow"
+            >
+              Demir Hurda Fiyatları
+            </a>{" "}
+            Tek Hurda Metal
+          </p>
+        </div>
       </div>
     </footer>
   );

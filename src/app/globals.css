@@ -531,6 +531,10 @@ img {
   font-weight: 700;
 }
 
+.footer-partners {
+  font-size: 8px;
+}
+
 .admin-shell {
   min-height: 100vh;
   display: grid;
