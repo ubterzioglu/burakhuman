@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd /cygdrive/c/temp_private/human && git log --oneline -3 2>&1 && echo \\\"---PUSH---\\\" && git push origin main 2>&1\",\"description\":\"Confirm merge and push to origin\"}",
+  "error": "Exit code 1\nb1be5a1 Merge origin/main into local: resolve Footer.tsx conflict (newsletter form + partner links layout)\nf77f0ff .\n1d14985 Align footer backlinks\n---PUSH---\nTo https://github.com/ubterzioglu/burakhuman.git\n   1d14985..b1be5a1  main -> main\n/usr/bin/bash: line 1: /c/Users/BARIS-~1/AppData/Local/Temp/claude-7459-cwd: No such file or directory",
+  "timestamp": "2026-07-28T08:38:10.874Z",
+  "retry_count": 5
+}

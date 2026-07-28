@@ -131,6 +131,19 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "src\\components\\Footer.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1785227778245,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\globals.css",
+      "accessCount": 1,
+      "lastAccessed": 1785227789316,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }
